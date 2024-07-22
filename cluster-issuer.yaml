@@ -1,0 +1,43 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: alain@tanoh.co
+    privateKeySecretRef:
+      name: letsencrypt-private-key
+    solvers:
+    - http01:
+        ingress:
+          class: traefik
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: traefik-ingress-controller
+rules:
+- apiGroups: [""]
+  resources: ["endpoints", "services", "secrets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["traefik.containo.us"]
+  resources: ["ingressroutetcps", "ingressrouteudps", "traefikservices", "middlewares", "tlsoptions", "serverstransports", "tlsstores", "ingressroutes"]
+  verbs: ["get", "list", "watch"]
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: traefik-ingress-controller
+subjects:
+- kind: ServiceAccount
+  name: traefik-ingress-controller
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: traefik-ingress-controller
+  apiGroup: rbac.authorization.k8s.io
